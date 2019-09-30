@@ -1,6 +1,20 @@
 module.exports = {
     'BO': [
-        {name: 'dashboard', url:'index.php?controller=AdminDashboard', customMethod: function({page}) {
+        {name: 'login', url: 'index.php?controller=AdminLogin'},
+        {name: 'dashboard', url: 'index.php?controller=AdminLogin', customMethod: async function({page, loginInfos}) {
+                await page.type('#email', loginInfos.admin.login);
+                await page.type('#passwd', loginInfos.admin.password);
+                await page.click('#submit_login');
+                await page.waitForNavigation({waitUntil: 'networkidle0'});
+
+                page.evaluate(async () => {
+                    const block = document.querySelector("button.onboarding-button-shut-down");
+                    if (block) {
+                        await page.click('button.onboarding-button-shut-down');
+                        await page.waitForSelector('a.onboarding-button-stop', {visible: true});
+                        await page.click('a.onboarding-button-stop');
+                    }
+                });
                 page.evaluate(() => {
                     const block = document.querySelector('#premium_advice_container');
                     if (block) block.remove();
@@ -142,9 +156,9 @@ module.exports = {
     'FO': [
         {name: 'homepage', url:'index.php'},
         {name: 'login', url:'index.php?controller=authentication&back=my-account'},
-        {name: 'my_account', url:'index.php?controller=authentication&back=my-account', customMethod: async function({page}) {
-                await page.type('#login-form input[name=email]', CLIENT_LOGIN);
-                await page.type('#login-form input[name=password]', CLIENT_PASSWD);
+        {name: 'my_account', url:'index.php?controller=authentication&back=my-account', customMethod: async function({page, loginInfos}) {
+                await page.type('#login-form input[name=email]', loginInfos.user.login);
+                await page.type('#login-form input[name=password]', loginInfos.user.password);
                 await page.click('#submit-login');
             }},
         {name: 'product_1', url: 'index.php?id_product=1&id_product_attribute=1&rewrite=hummingbird-printed-t-shirt&controller=product&id_lang=1#/1-size-s/8-color-white'},
