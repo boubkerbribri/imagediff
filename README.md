@@ -9,6 +9,8 @@ npm i
 You **MUST** disable DEBUG MODE in your PrestaShop administration :
 >Advanced Parameters > Performance > Debug Mode
 
+You **MUST** disable the "Gamification" module.
+
 You **MUST** disable the token security in the BO before launching the script. Add this in your `.htaccess` file:
 ```bash
 SetEnv _TOKEN_ disabled
