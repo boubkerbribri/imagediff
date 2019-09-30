@@ -6,9 +6,10 @@ Clone the repository in your local environment :
 git clone https://github.com/SimonGrn/imagediff.git
 npm i
 ```
+You **MUST** disable DEBUG MODE in your PrestaShop administration :
+>Advanced Parameters > Performance > Debug Mode
 
-You **MUST** disable the token security in the BO before launching the script, or it will fail !
-Add this in your `.htaccess` file:
+You **MUST** disable the token security in the BO before launching the script. Add this in your `.htaccess` file:
 ```bash
 SetEnv _TOKEN_ disabled
 ```
