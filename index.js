@@ -230,19 +230,3 @@ async function compareScreenshots(url, fileName, office) {
         }
     });
 }
-
-/**
- * Check if an element is visible
- * @param page
- * @param selector
- * @param timeout
- * @returns {Promise<boolean>}
- */
-async function isElementVisible(page, selector, timeout = 10) {
-    try {
-        await page.waitForSelector(selector, {visible: true, timeout});
-        return true;
-    } catch (error) {
-        return false;
-    }
-}
