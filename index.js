@@ -15,7 +15,9 @@ const urlsList = require('./urls.js');
 const CURRENTPASS = process.env.PASS || 'second';
 const URL_FO = process.env.URL_FO || 'http://localhost/prestashop/';
 const URL_BO = process.env.URL_BO || `${URL_FO}admin-dev/`;
-const THRESHOLD = process.env.THRESHOLD || 50;
+const LOGIN = process.env.LOGIN || 'demo@prestashop.com';
+const PASSWD = process.env.PASSWD || 'prestashop_demo';
+const THRESHOLD = process.env.THRESHOLD || 0;
 
 
 let page = null;
@@ -60,8 +62,8 @@ describe('Main scenario', async () => {
             page.goto(URL_BO),
             page.waitForNavigation({waitUntil: 'networkidle0'})
         ]);
-        await page.type('#email', 'demo@prestashop.com');
-        await page.type('#passwd', 'prestashop_demo');
+        await page.type('#email', LOGIN);
+        await page.type('#passwd', PASSWD);
         await page.click('#submit_login');
         await page.waitForNavigation({waitUntil: 'networkidle0'});
 
