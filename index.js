@@ -33,10 +33,14 @@ let page = null;
  */
 const createFolders = async () => {
     if (!fs.existsSync(reportPath)) await fs.mkdirSync(reportPath);
-    if (!fs.existsSync(fullReportPath)) await fs.mkdirSync(fullReportPath);
-    if (!fs.existsSync(goldenReportPath)) await fs.mkdirSync(goldenReportPath);
-    if (!fs.existsSync(runReportPath)) await fs.mkdirSync(runReportPath);
-    if (!fs.existsSync(resultReportPath)) await fs.mkdirSync(resultReportPath);
+    if (CURRENTRUN !== 'golden') {
+        if (!fs.existsSync(fullReportPath)) await fs.mkdirSync(fullReportPath);
+        if (!fs.existsSync(runReportPath)) await fs.mkdirSync(runReportPath);
+        if (!fs.existsSync(resultReportPath)) await fs.mkdirSync(resultReportPath);
+    } else {
+        if (!fs.existsSync(goldenReportPath)) await fs.mkdirSync(goldenReportPath);
+    }
+
 };
 createFolders();
 
