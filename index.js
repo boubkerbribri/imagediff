@@ -159,7 +159,7 @@ async function compareScreenshots(fileName) {
                 if (numDiffPixels > THRESHOLD) {
                     fs.writeFileSync(`${resultReportPath}/diff_${fileName}.png`, PNG.sync.write(diff));
                 }
-                expect(numDiffPixels, `Expected pixel difference to be below ${THRESHOLD}`).to.be.below(THRESHOLD);
+                expect(numDiffPixels, `Expected pixel difference to be below ${THRESHOLD}`).to.be.at.most(THRESHOLD);
                 resolve();
             } catch (error) {
                 reject(error);
