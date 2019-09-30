@@ -26,7 +26,7 @@ const loginInfos = {
         password : process.env.PASSWD || 'prestashop_demo',
     }
 }
-const THRESHOLD = process.env.THRESHOLD || 0;
+const THRESHOLD = parseInt(process.env.THRESHOLD) || 0;
 const HEADLESS = process.env.HEADLESS || true;
 
 let output = {
@@ -216,7 +216,7 @@ async function compareScreenshots(fileName, office) {
 
                 outputEntry.diff = numDiffPixels;
 
-                if (numDiffPixels > THRESHOLD) {
+                if (parseInt(numDiffPixels) > THRESHOLD) {
                     outputEntry.status = 'fail';
                     outputEntry.diffPath = diffImgPath;
                     fs.writeFileSync(diffImgPath, PNG.sync.write(diff));
