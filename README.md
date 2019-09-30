@@ -8,7 +8,7 @@ npm i
 ```
 
 ## How it works
-You first need to make a *golden pass* by launching the script with the `CURRENTPASS=golden` parameter (see below).
+You first need to make a *golden pass* by launching the script with the `RUN=golden` parameter (see below).
 
 These will be your references screenshots. You can always remake them when you need it by relaunching the script.
 
@@ -35,4 +35,4 @@ By default, the script raises an error if there is more than 0 pixels of differe
 | LOGIN               | LOGIN of your PrestaShop website (default to `demo@prestashop.com`) |
 | PASSWD              | PASSWD of your PrestaShop website (default to `prestashop_demo`) |
 | THRESHOLD           | Max number of pixels difference (default to `0`) |
-| CURRENTPASS         | Enforce this to `golden` to create golden screenshots (default to `second`) |
+| RUN                 | Enforce this to `golden` to create golden screenshots (default to `run`) |
