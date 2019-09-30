@@ -86,6 +86,16 @@ describe('Main scenario', async () => {
                     page.goto(URL_BO+BOPage.url),
                     page.waitForNavigation({waitUntil: 'networkidle0'})
                 ]);
+                //hide the spinner
+                page.evaluate(() => {
+                    const block = document.querySelector('#ajax_running');
+                    if (block) block.remove();
+                });
+                //hide the symfony toolbar
+                page.evaluate(() => {
+                    const block = document.querySelector('.sf-toolbar.sf-display-none');
+                    if (block) block.remove();
+                });
                 if (typeof(BOPage.customMethod) !== 'undefined') {
                     await BOPage.customMethod({page});
                 }
@@ -98,12 +108,14 @@ describe('Main scenario', async () => {
     await after(async () => {
         await browser.close();
         // Create report file
-        fs.writeFile(`${fullReportPath}/report.json`, JSON.stringify(output), (err) => {
-            if (err) {
-                return console.error(err);
-            }
-            return console.log(`File ${fullReportPath}/report.json saved!`);
-        });
+        if (CURRENTRUN !== 'golden') {
+            fs.writeFile(`${fullReportPath}/report.json`, JSON.stringify(output), (err) => {
+                if (err) {
+                    return console.error(err);
+                }
+                return console.log(`File ${fullReportPath}/report.json saved!`);
+            });
+        }
     });
 
 });
@@ -190,7 +202,6 @@ async function compareScreenshots(fileName, office) {
                     goldenImg.data, runImg.data, diff.data, goldenImg.width, goldenImg.height,
                     {threshold: 0.1});
 
-                outputEntry.status = 'fail';
                 outputEntry.diff = numDiffPixels;
 
                 if (numDiffPixels >= THRESHOLD) {
@@ -201,7 +212,7 @@ async function compareScreenshots(fileName, office) {
                     outputEntry.status = 'success';
                 }
                 output[office].push(outputEntry);
-                expect(numDiffPixels, `Expected pixel difference (${numDiffPixels}) to be below ${THRESHOLD}`).to.be.at.most(THRESHOLD);
+                expect(numDiffPixels, `Expected pixel difference (${numDiffPixels}) to be at most ${THRESHOLD}`).to.be.at.most(THRESHOLD);
                 resolve();
             } catch (error) {
                 reject(error);
