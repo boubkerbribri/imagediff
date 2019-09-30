@@ -1,0 +1,25 @@
+{
+  "name": "imagediff",
+  "version": "1.0.0",
+  "description": "Image diff script for PrestaShop",
+  "main": "index.js",
+  "scripts": {
+    "golden": "node ./node_modules/mocha/bin/mocha index.js "
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SimonGrn/imagediff.git"
+  },
+  "author": "Simon Garny",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SimonGrn/imagediff/issues"
+  },
+  "homepage": "https://github.com/SimonGrn/imagediff#readme",
+  "dependencies": {
+    "chai": "^4.2.0",
+    "mocha": "^6.2.1",
+    "pixelmatch": "^5.1.0",
+    "puppeteer": "^1.20.0"
+  }
+}
