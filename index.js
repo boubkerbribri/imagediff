@@ -17,6 +17,8 @@ const URL_FO = process.env.URL_FO || 'http://localhost/prestashop/';
 const URL_BO = process.env.URL_BO || `${URL_FO}admin-dev/`;
 const LOGIN = process.env.LOGIN || 'demo@prestashop.com';
 const PASSWD = process.env.PASSWD || 'prestashop_demo';
+const CLIENT_LOGIN = process.env.CLIENT_LOGIN || 'pub@prestashop.com';
+const CLIENT_PASSWD = process.env.CLIENT_PASSWD || '123456789';
 const THRESHOLD = process.env.THRESHOLD || 0;
 
 let output = {
@@ -60,7 +62,10 @@ describe('Main scenario', async () => {
         await page.setExtraHTTPHeaders({
             'Accept-Language': 'en-US',
         });
+    });
 
+    describe('Crawl BO pages', async function() {
+        //login into BO
         await Promise.all([
             page.goto(URL_BO),
             page.waitForNavigation({waitUntil: 'networkidle0'})
@@ -76,9 +81,7 @@ describe('Main scenario', async () => {
             await page.waitForSelector('a.onboarding-button-stop', {visible: true});
             await page.click('a.onboarding-button-stop');
         }
-    });
-
-    describe('Crawl BO pages', async function() {
+        //crawl every BO page
         BOPages = urlsList.BO;
         BOPages.forEach(function(BOPage) {
             it(`BO_${BOPage.name}`, async function () {
@@ -98,6 +101,29 @@ describe('Main scenario', async () => {
                 });
                 if (typeof(BOPage.customMethod) !== 'undefined') {
                     await BOPage.customMethod({page});
+                }
+                await takeAndCompareScreenshot(page, this.test.title);
+            });
+        });
+
+    });
+
+    describe('Crawl FO pages', async function() {
+        //login into Fo
+        await Promise.all([
+            page.goto(URL_FO),
+            page.waitForNavigation({waitUntil: 'networkidle0'})
+        ]);
+        //crawl every BO page
+        FOPages = urlsList.FO;
+        FOPages.forEach(function(FOPage) {
+            it(`FO_${FOPage.name}`, async function () {
+                await Promise.all([
+                    page.goto(URL_FO+FOPage.url),
+                    page.waitForNavigation({waitUntil: 'networkidle0'})
+                ]);
+                if (typeof(FOPage.customMethod) !== 'undefined') {
+                    await FOPage.customMethod({page});
                 }
                 await takeAndCompareScreenshot(page, this.test.title);
             });
