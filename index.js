@@ -7,14 +7,15 @@ const pixelmatch = require('pixelmatch');
 const reportPath = 'imagediff';
 const reportPathDate = (new Date().toISOString().slice(0, 10));
 const fullReportPath = `${reportPath}/${reportPathDate}`;
-const firstReportPath = `${reportPath}/golden`;
-const secondReportPath = `${reportPath}/${reportPathDate}/pass`;
+const goldenReportPath = `${reportPath}/golden`;
+const passReportPath = `${reportPath}/${reportPathDate}/pass`;
 const resultReportPath = `${reportPath}/${reportPathDate}/diff`;
 const urlsList = require('./urls.js');
 
-const currentPass = process.env.PASS || 'second';
+const CURRENTPASS = process.env.PASS || 'second';
 const URL_FO = process.env.URL_FO || 'http://localhost/prestashop/';
 const URL_BO = process.env.URL_BO || `${URL_FO}admin-dev/`;
+const THRESHOLD = process.env.THRESHOLD || 50;
 
 
 let page = null;
@@ -29,8 +30,8 @@ const createFolders = async () => {
     }
     if (!fs.existsSync(fullReportPath)) {
         await fs.mkdirSync(fullReportPath);
-        if (!fs.existsSync(firstReportPath)) await fs.mkdirSync(firstReportPath);
-        if (!fs.existsSync(secondReportPath)) await fs.mkdirSync(secondReportPath);
+        if (!fs.existsSync(goldenReportPath)) await fs.mkdirSync(goldenReportPath);
+        if (!fs.existsSync(passReportPath)) await fs.mkdirSync(passReportPath);
         if (!fs.existsSync(resultReportPath)) await fs.mkdirSync(resultReportPath);
     }
 };
@@ -121,23 +122,23 @@ const interceptRequestAndResponse = async (page) => {
  * @returns {Promise<unknown>}
  */
 async function takeAndCompareScreenshot(page, fileName) {
-    let path = (currentPass === 'first' ? firstReportPath : secondReportPath);
+    let path = (CURRENTPASS === 'golden' ? goldenReportPath : passReportPath);
     await page.screenshot({path: `${path}/${fileName}.png`});
 
-    if (currentPass !== 'first') {
+    if (CURRENTPASS !== 'golden') {
         return await compareScreenshots(fileName);
     }
 }
 
 /**
- * Compare 2 screenshots and expect them to be less than 1% difference
+ * Compare 2 screenshots and expect them to be less than XX pixels difference
  * @param fileName
  * @returns {Promise<unknown>}
  */
 async function compareScreenshots(fileName) {
     return new Promise((resolve, reject) => {
-        const img1 = fs.createReadStream(`${firstReportPath}/${fileName}.png`).pipe(new PNG()).on('parsed', doneReading);
-        const img2 = fs.createReadStream(`${secondReportPath}/${fileName}.png`).pipe(new PNG()).on('parsed', doneReading);
+        const goldenImg = fs.createReadStream(`${goldenReportPath}/${fileName}.png`).pipe(new PNG()).on('parsed', doneReading);
+        const passImg = fs.createReadStream(`${passReportPath}/${fileName}.png`).pipe(new PNG()).on('parsed', doneReading);
 
         let filesRead = 0;
         function doneReading() {
@@ -146,20 +147,19 @@ async function compareScreenshots(fileName) {
 
             // The files should be the same size.
             try {
-                expect(img1.width, 'image widths are the same').equal(img2.width);
-                expect(img1.height, 'image heights are the same').equal(img2.height);
+                expect(goldenImg.width, 'image widths are the same').equal(passImg.width);
+                expect(goldenImg.height, 'image heights are the same').equal(passImg.height);
 
                 // Do the visual diff.
-                const diff = new PNG({width: img1.width, height: img2.height});
+                const diff = new PNG({width: goldenImg.width, height: passImg.height});
                 const numDiffPixels = pixelmatch(
-                    img1.data, img2.data, diff.data, img1.width, img1.height,
+                    goldenImg.data, passImg.data, diff.data, goldenImg.width, goldenImg.height,
                     {threshold: 0.1});
 
-                const percentage = Math.round((numDiffPixels*10000) / (img1.width*img1.height))/100;
-                if (percentage > 0.5) {
+                if (numDiffPixels > THRESHOLD) {
                     fs.writeFileSync(`${resultReportPath}/diff_${fileName}.png`, PNG.sync.write(diff));
                 }
-                expect(percentage, 'Expected pixel percentage difference to be 0').equal(0);
+                expect(numDiffPixels, `Expected pixel difference to be below ${THRESHOLD}`).to.be.below(THRESHOLD);
                 resolve();
             } catch (error) {
                 reject(error);
