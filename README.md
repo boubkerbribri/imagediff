@@ -19,10 +19,19 @@ for every URL. You'll also get every diff image in the `date/diff` folder, if th
 ## URLs
 The `urls.js` file contains the list of URL to crawl and capture. You can edit it at your convenience.
 
-The structure is pretty clear, the `customMethod` lets you inject code before taking a screenshot to remove
-some elements for example.
+The structure is pretty clear, the `customMethod` lets you inject code before taking a screenshot (to remove
+some random elements for example).
 
 ## Threshold
-By default, the script raises an error if there is more than 50 pixels of difference. You can change that by adding the 
-`threshold` parameter, and putting an integer value (ex : `threshold=0` if you don't want any difference in your 
-screenshots) that will be interpreted as an absolute value (i.e. number of pixels difference).
+By default, the script raises an error if there is more than 0 pixels of difference. You can change that by adding the 
+`THRESHOLD` parameter, and putting an integer value, ex : `THRESHOLD=50`.
+
+### Available command line parameters
+
+| Parameter           | Description      |
+|---------------------|----------------- |
+| URL_FO              | URL of your PrestaShop website Front Office (default to `http://localhost/prestashop`) |
+| URL_BO              | URL of your PrestaShop website Back Office (default to `${URL_FO}/admin-dev`) |
+| LOGIN               | LOGIN of your PrestaShop website (default to `demo@prestashop.com`) |
+| PASSWD              | PASSWD of your PrestaShop website (default to `prestashop_demo`) |
+| THRESHOLD           | Max number of pixels difference (default to `0`) |
