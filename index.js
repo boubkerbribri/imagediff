@@ -93,15 +93,15 @@ describe('Main scenario', async () => {
 
     await after(async () => {
         await browser.close();
+        // Create report file
+        fs.writeFile(`${fullReportPath}/report.json`, JSON.stringify(output), (err) => {
+            if (err) {
+                return console.error(err);
+            }
+            return console.log(`File ${fullReportPath}/report.json saved!`);
+        });
     });
 
-    // Create report file
-    fs.writeFile(`${fullReportPath}/report.json`, JSON.stringify(output), (err) => {
-        if (err) {
-            return console.error(err);
-        }
-        return console.log(`File ${fullReportPath}/report.json saved!`);
-    });
 });
 
 /**
