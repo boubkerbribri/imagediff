@@ -100,11 +100,6 @@ describe('Crawl whole site and make screenshots', async () => {
                     const block = document.querySelector('#ajax_running');
                     if (block) block.remove();
                 });
-                //hide the symfony toolbar
-                page.evaluate(() => {
-                    const block = document.querySelector('.sf-toolbar.sf-display-none');
-                    if (block) block.remove();
-                });
                 if (typeof(BOPage.customMethod) !== 'undefined') {
                     await BOPage.customMethod({page, loginInfos});
                 }
@@ -217,7 +212,7 @@ async function compareScreenshots(url, fileName, office) {
                 }
 
                 // Do the visual diff.
-                const diff = new PNG({width: goldenImg.width, height: runImg.height});
+                const diff = new PNG({width: goldenImg.width, height: goldenImg.height});
                 const numDiffPixels = pixelmatch(
                     goldenImg.data, runImg.data, diff.data, goldenImg.width, goldenImg.height,
                     {threshold: 0.1});
