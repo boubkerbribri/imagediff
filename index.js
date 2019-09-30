@@ -8,18 +8,23 @@ const reportPath = 'imagediff';
 const reportPathDate = (new Date().toISOString().slice(0, 10));
 const fullReportPath = `${reportPath}/${reportPathDate}`;
 const goldenReportPath = `${reportPath}/golden`;
-const passReportPath = `${reportPath}/${reportPathDate}/pass`;
+const runReportPath = `${reportPath}/${reportPathDate}/run`;
 const resultReportPath = `${reportPath}/${reportPathDate}/diff`;
 const urlsList = require('./urls.js');
 
-const CURRENTPASS = process.env.PASS || 'second';
+const CURRENTRUN = process.env.RUN || 'run';
 const URL_FO = process.env.URL_FO || 'http://localhost/prestashop/';
 const URL_BO = process.env.URL_BO || `${URL_FO}admin-dev/`;
 const LOGIN = process.env.LOGIN || 'demo@prestashop.com';
 const PASSWD = process.env.PASSWD || 'prestashop_demo';
 const THRESHOLD = process.env.THRESHOLD || 0;
 
-
+let output = {
+    date : reportPathDate,
+    threshold : THRESHOLD,
+    BO : [],
+    FO : []
+};
 let page = null;
 
 /**
@@ -30,7 +35,7 @@ const createFolders = async () => {
     if (!fs.existsSync(reportPath)) await fs.mkdirSync(reportPath);
     if (!fs.existsSync(fullReportPath)) await fs.mkdirSync(fullReportPath);
     if (!fs.existsSync(goldenReportPath)) await fs.mkdirSync(goldenReportPath);
-    if (!fs.existsSync(passReportPath)) await fs.mkdirSync(passReportPath);
+    if (!fs.existsSync(runReportPath)) await fs.mkdirSync(runReportPath);
     if (!fs.existsSync(resultReportPath)) await fs.mkdirSync(resultReportPath);
 };
 createFolders();
@@ -86,37 +91,53 @@ describe('Main scenario', async () => {
 
     });
 
-
     await after(async () => {
         await browser.close();
+    });
+
+    // Create report file
+    fs.writeFile(`${fullReportPath}/report.json`, JSON.stringify(output), (err) => {
+        if (err) {
+            return console.error(err);
+        }
+        return console.log(`File ${fullReportPath}/report.json saved!`);
     });
 });
 
 /**
- * Take a screenshot of a page and ask for comparison if it's the second pass
+ * Take a screenshot of a page and ask for comparison if it's the second run
  * @param page
  * @param fileName
+ * @param office
  * @returns {Promise<unknown>}
  */
-async function takeAndCompareScreenshot(page, fileName) {
-    let path = (CURRENTPASS === 'golden' ? goldenReportPath : passReportPath);
+async function takeAndCompareScreenshot(page, fileName, office = 'BO') {
+    let path = (CURRENTRUN === 'golden' ? goldenReportPath : runReportPath);
     await page.screenshot({path: `${path}/${fileName}.png`});
 
-    if (CURRENTPASS === 'second') {
-        return await compareScreenshots(fileName);
+    if (CURRENTRUN !== 'golden') {
+        return await compareScreenshots(fileName, office);
     }
 }
 
 /**
  * Compare 2 screenshots and expect them to be less than XX pixels difference
  * @param fileName
+ * @param office
  * @returns {Promise<unknown>}
  */
-async function compareScreenshots(fileName) {
+async function compareScreenshots(fileName, office) {
     return new Promise((resolve, reject) => {
         const goldImgPath = `${goldenReportPath}/${fileName}.png`;
-        const passImgPath = `${passReportPath}/${fileName}.png`;
+        const runImgPath = `${runReportPath}/${fileName}.png`;
         const diffImgPath = `${resultReportPath}/${fileName}.png`;
+
+        let outputEntry = {
+            name : fileName,
+            status : 'error',
+            goldenPath : goldImgPath,
+            runPath : runImgPath
+        };
 
         let goldenExists = false;
         let fileExists = false;
@@ -128,7 +149,7 @@ async function compareScreenshots(fileName) {
         } catch(err) {}
         //check if image exists (should be...)
         try {
-            if (fs.existsSync(passImgPath)) {
+            if (fs.existsSync(runImgPath)) {
                 fileExists = true;
             }
         } catch(err) {}
@@ -136,11 +157,18 @@ async function compareScreenshots(fileName) {
         //we expect both files to exist, or we just exit
         expect(goldenExists).to.be.true;
         expect(fileExists).to.be.true;
-        if (!fileExists || !goldenExists) {
+        if (!fileExists) {
+            outputEntry.status = 'run file not found';
+            output[office].push(outputEntry);
+            return;
+        }
+        if (!goldenExists) {
+            outputEntry.status = 'golden file not found';
+            output[office].push(outputEntry);
             return;
         }
         const goldenImg = fs.createReadStream(goldImgPath).pipe(new PNG()).on('parsed', doneReading);
-        const passImg = fs.createReadStream(passImgPath).pipe(new PNG()).on('parsed', doneReading);
+        const runImg = fs.createReadStream(runImgPath).pipe(new PNG()).on('parsed', doneReading);
 
         let filesRead = 0;
         function doneReading() {
@@ -149,19 +177,27 @@ async function compareScreenshots(fileName) {
 
             // The files should be the same size.
             try {
-                expect(goldenImg.width, 'image widths are the same').equal(passImg.width);
-                expect(goldenImg.height, 'image heights are the same').equal(passImg.height);
+                expect(goldenImg.width, 'image widths are the same').equal(runImg.width);
+                expect(goldenImg.height, 'image heights are the same').equal(runImg.height);
 
                 // Do the visual diff.
-                const diff = new PNG({width: goldenImg.width, height: passImg.height});
+                const diff = new PNG({width: goldenImg.width, height: runImg.height});
                 const numDiffPixels = pixelmatch(
-                    goldenImg.data, passImg.data, diff.data, goldenImg.width, goldenImg.height,
+                    goldenImg.data, runImg.data, diff.data, goldenImg.width, goldenImg.height,
                     {threshold: 0.1});
 
-                if (numDiffPixels > THRESHOLD) {
+                outputEntry.status = 'fail';
+                outputEntry.diff = numDiffPixels;
+
+                if (numDiffPixels >= THRESHOLD) {
+                    outputEntry.status = 'fail';
+                    outputEntry.diffPath = diffImgPath;
                     fs.writeFileSync(diffImgPath, PNG.sync.write(diff));
+                } else {
+                    outputEntry.status = 'success';
                 }
-                expect(numDiffPixels, `Expected pixel difference to be below ${THRESHOLD}`).to.be.at.most(THRESHOLD);
+                output[office].push(outputEntry);
+                expect(numDiffPixels, `Expected pixel difference (${numDiffPixels}) to be below ${THRESHOLD}`).to.be.at.most(THRESHOLD);
                 resolve();
             } catch (error) {
                 reject(error);
