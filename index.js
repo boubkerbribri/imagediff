@@ -27,6 +27,7 @@ const loginInfos = {
     }
 }
 const THRESHOLD = process.env.THRESHOLD || 0;
+const HEADLESS = process.env.HEADLESS || true;
 
 let output = {
     date : reportPathDate,
@@ -56,10 +57,10 @@ createFolders();
 describe('Crawl whole site and make screenshots', async () => {
     before(async function() {
         browser = await puppeteer.launch({
-            headless: false,
+            headless: JSON.parse(HEADLESS),
             timeout: 0,
             slowMo: 5,
-            args: ['--start-maximized', '--no-sandbox', '--lang=fr-FR'],
+            args: ['--start-maximized', '--no-sandbox', '--lang=en-GB'],
             defaultViewport: {
                 width: 1680,
                 height: 900,
@@ -68,7 +69,7 @@ describe('Crawl whole site and make screenshots', async () => {
 
         page = await browser.newPage();
         await page.setExtraHTTPHeaders({
-            'Accept-Language': 'en-US',
+            'Accept-Language': 'fr-FR',
         });
     });
 
@@ -215,7 +216,7 @@ async function compareScreenshots(fileName, office) {
 
                 outputEntry.diff = numDiffPixels;
 
-                if (numDiffPixels >= THRESHOLD) {
+                if (numDiffPixels > THRESHOLD) {
                     outputEntry.status = 'fail';
                     outputEntry.diffPath = diffImgPath;
                     fs.writeFileSync(diffImgPath, PNG.sync.write(diff));
