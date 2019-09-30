@@ -108,7 +108,7 @@ describe('Crawl whole site and make screenshots', async () => {
                 if (typeof(BOPage.customMethod) !== 'undefined') {
                     await BOPage.customMethod({page, loginInfos});
                 }
-                await takeAndCompareScreenshot(page, this.test.title);
+                await takeAndCompareScreenshot(BOPage.url, page, this.test.title);
             });
         });
 
@@ -126,7 +126,7 @@ describe('Crawl whole site and make screenshots', async () => {
                 if (typeof(FOPage.customMethod) !== 'undefined') {
                     await FOPage.customMethod({page, loginInfos});
                 }
-                await takeAndCompareScreenshot(page, this.test.title, 'FO');
+                await takeAndCompareScreenshot(FOPage.url, page, this.test.title, 'FO');
             });
         });
     });
@@ -139,12 +139,12 @@ describe('Crawl whole site and make screenshots', async () => {
  * @param office
  * @returns {Promise<unknown>}
  */
-async function takeAndCompareScreenshot(page, fileName, office = 'BO') {
+async function takeAndCompareScreenshot(url, page, fileName, office = 'BO') {
     let path = (CURRENTRUN === 'golden' ? goldenReportPath : runReportPath);
     await page.screenshot({path: `${path}/${fileName}.png`, fullPage: true });
 
     if (CURRENTRUN !== 'golden') {
-        return await compareScreenshots(fileName, office);
+        return await compareScreenshots(url, fileName, office);
     }
 }
 
@@ -154,7 +154,7 @@ async function takeAndCompareScreenshot(page, fileName, office = 'BO') {
  * @param office
  * @returns {Promise<unknown>}
  */
-async function compareScreenshots(fileName, office) {
+async function compareScreenshots(url, fileName, office) {
     return new Promise((resolve, reject) => {
         const goldImgPath = `${goldenReportPath}/${fileName}.png`;
         const runImgPath = `${runReportPath}/${fileName}.png`;
@@ -162,6 +162,7 @@ async function compareScreenshots(fileName, office) {
 
         let outputEntry = {
             name : fileName,
+            url : url,
             status : 'error',
             goldenPath : goldImgPath,
             runPath : runImgPath
