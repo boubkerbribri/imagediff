@@ -95,18 +95,13 @@ describe('Crawl whole site and make screenshots', async () => {
                     page.goto(URL_BO+BOPage.url),
                     page.waitForNavigation({waitUntil: 'networkidle0'})
                 ]);
-                //hide the spinner
-                page.evaluate(() => {
-                    const block = document.querySelector('#ajax_running');
-                    if (block) block.remove();
-                });
+                await page.waitForSelector('#ajax_running[style="display: none;"]');
                 if (typeof(BOPage.customMethod) !== 'undefined') {
                     await BOPage.customMethod({page, loginInfos});
                 }
                 await takeAndCompareScreenshot(BOPage.url, page, this.test.title);
             });
         });
-
     });
 
     describe('Crawl FO pages', async function() {
