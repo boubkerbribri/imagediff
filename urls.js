@@ -1,6 +1,11 @@
 module.exports = {
     'BO': [
-        {name: 'login', url: 'index.php?controller=AdminLogin'},
+        {name: 'login', url: 'index.php?controller=AdminLogin', customMethod: async function({page}) {
+                page.evaluate(() => {
+                    const block = document.querySelector('#shop-img');
+                    if (block) block.click();
+                });
+            }},
         {name: 'dashboard', url: 'index.php?controller=AdminLogin', customMethod: async function({page, loginInfos}) {
                 await page.type('#email', loginInfos.admin.login);
                 await page.type('#passwd', loginInfos.admin.password);
@@ -29,7 +34,7 @@ module.exports = {
         {name: 'invoices', url: 'index.php/sell/orders/invoices/'},
         {name: 'credits_slips', url: 'index.php?controller=AdminSlip'},
         {name: 'delivery_slips', url: 'index.php/sell/orders/delivery-slips/'},
-        {name: 'shopping_carts', url: 'index.php?controller=AdminCarts'},
+        /*{name: 'shopping_carts', url: 'index.php?controller=AdminCarts'},*/
         {name: 'products', url: 'index.php/sell/catalog/products'},
         {name: 'categories', url: 'index.php/sell/catalog/categories', customMethod: function({page}) {
                 page.evaluate(() => {
@@ -59,10 +64,16 @@ module.exports = {
         {name: 'add_catalog_price_rule', url: 'index.php?controller=AdminSpecificPriceRule&addspecific_price_rule'},
         {name: 'stock', url: 'index.php/sell/stocks/'},
         {name: 'movements', url: 'index.php/sell/stocks/movements'},
-        {name: 'customers', url: 'index.php/sell/customers/'},
+        {name: 'customers', url: 'index.php/sell/customers/', customMethod: async function () {
+                page.evaluate(() => {
+                    const block = document.querySelector('td.column-connect');
+                    if (block) block.innerHTML = "";
+                });
+
+            }},
         {name: 'add_customer', url: 'index.php/sell/customers/new'},
         {name: 'addresses', url: 'index.php?controller=AdminAddresses'},
-        {name: 'add_customer', url: 'index.php?controller=AdminAddresses&addaddress'},
+        {name: 'add_address', url: 'index.php?controller=AdminAddresses&addaddress'},
         {name: 'customer_service', url: 'index.php?controller=AdminCustomerThreads'},
         {name: 'order_messages', url: 'index.php?controller=AdminOrderMessage'},
         {name: 'add_order_message', url: 'index.php?controller=AdminOrderMessage&addorder_message'},
@@ -72,13 +83,33 @@ module.exports = {
         {name: 'module_manager', url: 'index.php/improve/modules/manage'},
         {name: 'module_manager_alerts', url: 'index.php/improve/modules/alerts'},
         {name: 'module_manager_updates', url: 'index.php/improve/modules/updates'},
-        {name: 'module_catalog', url: 'index.php?controller=AdminPsMboModule'},
+        {name: 'module_catalog', url: 'index.php?controller=AdminPsMboModule', customMethod: async function() {
+                page.evaluate(() => {
+                    const block = document.querySelector('#modules-list-container-all');
+                    if (block) block.remove();
+                });
+            }},
         {name: 'module_catalog_selection', url: 'index.php/improve/modules/addons-store'},
-        {name: 'theme_logo', url: 'index.php/improve/design/themes/'},
-        {name: 'add_theme', url: 'index.php/improve/design/themes/import'},
+        {name: 'theme_logo', url: 'index.php/improve/design/themes/', customMethod: async function({page}) {
+                page.evaluate(() => {
+                    const block = document.querySelector('.addons-catalog-theme');
+                    if (block) block.remove();
+                });
+            }},
+        {name: 'add_theme', url: 'index.php/improve/design/themes/import', customMethod: async function({page}) {
+                page.evaluate(() => {
+                    const block = document.querySelector('.addons-catalog-theme');
+                    if (block) block.remove();
+                });
+            }},
         {name: 'homepage_configuration', url: 'index.php?controller=AdminPsThemeCustoConfiguration'},
         {name: 'advanced_customization', url: 'index.php?controller=AdminPsThemeCustoAdvanced'},
-        {name: 'theme_catalog', url: 'index.php?controller=AdminPsMboTheme'},
+        {name: 'theme_catalog', url: 'index.php?controller=AdminPsMboTheme', customMethod: async function () {
+                page.evaluate(() => {
+                    const block = document.querySelector('.addons-catalog-theme');
+                    if (block) block.remove();
+                });
+            }},
         {name: 'email_theme', url: 'index.php/improve/design/mail_theme/'},
         {name: 'pages', url: 'index.php/improve/design/cms-pages/'},
         {name: 'add_page_category', url: 'index.php/improve/design/cms-pages/category/new'},
@@ -149,7 +180,7 @@ module.exports = {
         {name: 'permissions', url: 'index.php?controller=AdminAccess'},
         {name: 'database', url: 'index.php/configure/advanced/sql-requests/'},
         {name: 'add_query', url: 'index.php/configure/advanced/sql-requests/new'},
-        {name: 'logs', url: 'index.php/configure/advanced/logs/'},
+        /*{name: 'logs', url: 'index.php/configure/advanced/logs/'},*/
         {name: 'webservice', url: 'index.php/configure/advanced/webservice-keys/'},
         {name: 'add_webservice_key', url: 'index.php/configure/advanced/webservice-keys/new'},
     ],
