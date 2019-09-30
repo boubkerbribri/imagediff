@@ -4,7 +4,8 @@
   "description": "Image diff script for PrestaShop",
   "main": "index.js",
   "scripts": {
-    "golden": "node ./node_modules/mocha/bin/mocha index.js "
+    "imagediff": "mocha index.js",
+    "golden": "mocha index.js RUN=golden"
   },
   "repository": {
     "type": "git",
