@@ -15,10 +15,17 @@ const urlsList = require('./urls.js');
 const CURRENTRUN = process.env.RUN || 'run';
 const URL_FO = process.env.URL_FO || 'http://localhost/prestashop/';
 const URL_BO = process.env.URL_BO || `${URL_FO}admin-dev/`;
-const LOGIN = process.env.LOGIN || 'demo@prestashop.com';
-const PASSWD = process.env.PASSWD || 'prestashop_demo';
-const CLIENT_LOGIN = process.env.CLIENT_LOGIN || 'pub@prestashop.com';
-const CLIENT_PASSWD = process.env.CLIENT_PASSWD || '123456789';
+
+const loginInfos = {
+    user : {
+        login: process.env.CLIENT_LOGIN || 'pub@prestashop.com',
+        password : process.env.CLIENT_PASSWD || '123456789'
+    },
+    admin: {
+        login: process.env.LOGIN || 'demo@prestashop.com',
+        password : process.env.PASSWD || 'prestashop_demo',
+    }
+}
 const THRESHOLD = process.env.THRESHOLD || 0;
 
 let output = {
@@ -46,7 +53,7 @@ const createFolders = async () => {
 };
 createFolders();
 
-describe('Main scenario', async () => {
+describe('Crawl whole site and make screenshots', async () => {
     before(async function() {
         browser = await puppeteer.launch({
             headless: false,
@@ -58,29 +65,27 @@ describe('Main scenario', async () => {
                 height: 900,
             },
         });
+
         page = await browser.newPage();
         await page.setExtraHTTPHeaders({
             'Accept-Language': 'en-US',
         });
     });
 
-    describe('Crawl BO pages', async function() {
-        //login into BO
-        await Promise.all([
-            page.goto(URL_BO),
-            page.waitForNavigation({waitUntil: 'networkidle0'})
-        ]);
-        await page.type('#email', LOGIN);
-        await page.type('#passwd', PASSWD);
-        await page.click('#submit_login');
-        await page.waitForNavigation({waitUntil: 'networkidle0'});
-
-        if (await isElementVisible(page, 'button.onboarding-button-shut-down')) {
-            //close the welcome modal
-            await page.click('button.onboarding-button-shut-down');
-            await page.waitForSelector('a.onboarding-button-stop', {visible: true});
-            await page.click('a.onboarding-button-stop');
+    after(async () => {
+        await browser.close();
+        // Create report file
+        if (CURRENTRUN !== 'golden') {
+            fs.writeFile(`${fullReportPath}/report.json`, JSON.stringify(output), (err) => {
+                if (err) {
+                    return console.error(err);
+                }
+                return console.log(`File ${fullReportPath}/report.json saved!`);
+            });
         }
+    });
+
+    describe('Crawl BO pages', async function() {
         //crawl every BO page
         BOPages = urlsList.BO;
         BOPages.forEach(function(BOPage) {
@@ -100,7 +105,7 @@ describe('Main scenario', async () => {
                     if (block) block.remove();
                 });
                 if (typeof(BOPage.customMethod) !== 'undefined') {
-                    await BOPage.customMethod({page});
+                    await BOPage.customMethod({page, loginInfos});
                 }
                 await takeAndCompareScreenshot(page, this.test.title);
             });
@@ -109,11 +114,6 @@ describe('Main scenario', async () => {
     });
 
     describe('Crawl FO pages', async function() {
-        //login into Fo
-        await Promise.all([
-            page.goto(URL_FO),
-            page.waitForNavigation({waitUntil: 'networkidle0'})
-        ]);
         //crawl every BO page
         FOPages = urlsList.FO;
         FOPages.forEach(function(FOPage) {
@@ -123,27 +123,12 @@ describe('Main scenario', async () => {
                     page.waitForNavigation({waitUntil: 'networkidle0'})
                 ]);
                 if (typeof(FOPage.customMethod) !== 'undefined') {
-                    await FOPage.customMethod({page});
+                    await FOPage.customMethod({page, loginInfos});
                 }
                 await takeAndCompareScreenshot(page, this.test.title);
             });
         });
-
     });
-
-    await after(async () => {
-        await browser.close();
-        // Create report file
-        if (CURRENTRUN !== 'golden') {
-            fs.writeFile(`${fullReportPath}/report.json`, JSON.stringify(output), (err) => {
-                if (err) {
-                    return console.error(err);
-                }
-                return console.log(`File ${fullReportPath}/report.json saved!`);
-            });
-        }
-    });
-
 });
 
 /**
@@ -155,7 +140,7 @@ describe('Main scenario', async () => {
  */
 async function takeAndCompareScreenshot(page, fileName, office = 'BO') {
     let path = (CURRENTRUN === 'golden' ? goldenReportPath : runReportPath);
-    await page.screenshot({path: `${path}/${fileName}.png`});
+    await page.screenshot({path: `${path}/${fileName}.png`, fullPage: true });
 
     if (CURRENTRUN !== 'golden') {
         return await compareScreenshots(fileName, office);
