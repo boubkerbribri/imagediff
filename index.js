@@ -27,17 +27,12 @@ let page = null;
  * @returns {Promise<void>}
  */
 const createFolders = async () => {
-    if (!fs.existsSync(reportPath)) {
-        await fs.mkdirSync(reportPath);
-    }
-    if (!fs.existsSync(fullReportPath)) {
-        await fs.mkdirSync(fullReportPath);
-        if (!fs.existsSync(goldenReportPath)) await fs.mkdirSync(goldenReportPath);
-        if (!fs.existsSync(passReportPath)) await fs.mkdirSync(passReportPath);
-        if (!fs.existsSync(resultReportPath)) await fs.mkdirSync(resultReportPath);
-    }
+    if (!fs.existsSync(reportPath)) await fs.mkdirSync(reportPath);
+    if (!fs.existsSync(fullReportPath)) await fs.mkdirSync(fullReportPath);
+    if (!fs.existsSync(goldenReportPath)) await fs.mkdirSync(goldenReportPath);
+    if (!fs.existsSync(passReportPath)) await fs.mkdirSync(passReportPath);
+    if (!fs.existsSync(resultReportPath)) await fs.mkdirSync(resultReportPath);
 };
-
 createFolders();
 
 describe('Main scenario', async () => {
@@ -53,7 +48,6 @@ describe('Main scenario', async () => {
             },
         });
         page = await browser.newPage();
-        //await interceptRequestAndResponse(page);
         await page.setExtraHTTPHeaders({
             'Accept-Language': 'en-US',
         });
@@ -99,25 +93,6 @@ describe('Main scenario', async () => {
 });
 
 /**
- * Intercepts all requests to block gamification stuff and addons ads
- * @param page
- * @returns {Promise<void>}
- */
-const interceptRequestAndResponse = async (page) => {
-    await page.setRequestInterception(true);
-    await page.on('request', (request) => {
-        const url = request.url();
-        const filters = [
-            'gamification.prestashop',
-        ];
-        const shouldAbort = filters.some((urlPart) => url.includes(urlPart));
-        if (shouldAbort) {
-            request.abort();
-        } else request.continue();
-    });
-};
-
-/**
  * Take a screenshot of a page and ask for comparison if it's the second pass
  * @param page
  * @param fileName
@@ -127,7 +102,7 @@ async function takeAndCompareScreenshot(page, fileName) {
     let path = (CURRENTPASS === 'golden' ? goldenReportPath : passReportPath);
     await page.screenshot({path: `${path}/${fileName}.png`});
 
-    if (CURRENTPASS !== 'golden') {
+    if (CURRENTPASS === 'second') {
         return await compareScreenshots(fileName);
     }
 }
@@ -139,8 +114,33 @@ async function takeAndCompareScreenshot(page, fileName) {
  */
 async function compareScreenshots(fileName) {
     return new Promise((resolve, reject) => {
-        const goldenImg = fs.createReadStream(`${goldenReportPath}/${fileName}.png`).pipe(new PNG()).on('parsed', doneReading);
-        const passImg = fs.createReadStream(`${passReportPath}/${fileName}.png`).pipe(new PNG()).on('parsed', doneReading);
+        const goldImgPath = `${goldenReportPath}/${fileName}.png`;
+        const passImgPath = `${passReportPath}/${fileName}.png`;
+        const diffImgPath = `${resultReportPath}/${fileName}.png`;
+
+        let goldenExists = false;
+        let fileExists = false;
+        //check if golden image exists
+        try {
+            if (fs.existsSync(goldImgPath)) {
+                goldenExists = true;
+            }
+        } catch(err) {}
+        //check if image exists (should be...)
+        try {
+            if (fs.existsSync(passImgPath)) {
+                fileExists = true;
+            }
+        } catch(err) {}
+
+        //we expect both files to exist, or we just exit
+        expect(goldenExists).to.be.true;
+        expect(fileExists).to.be.true;
+        if (!fileExists || !goldenExists) {
+            return;
+        }
+        const goldenImg = fs.createReadStream(goldImgPath).pipe(new PNG()).on('parsed', doneReading);
+        const passImg = fs.createReadStream(passImgPath).pipe(new PNG()).on('parsed', doneReading);
 
         let filesRead = 0;
         function doneReading() {
@@ -159,7 +159,7 @@ async function compareScreenshots(fileName) {
                     {threshold: 0.1});
 
                 if (numDiffPixels > THRESHOLD) {
-                    fs.writeFileSync(`${resultReportPath}/diff_${fileName}.png`, PNG.sync.write(diff));
+                    fs.writeFileSync(diffImgPath, PNG.sync.write(diff));
                 }
                 expect(numDiffPixels, `Expected pixel difference to be below ${THRESHOLD}`).to.be.at.most(THRESHOLD);
                 resolve();
