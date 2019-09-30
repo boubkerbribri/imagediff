@@ -209,6 +209,13 @@ async function compareScreenshots(url, fileName, office) {
                 expect(goldenImg.width, 'image widths are the same').equal(runImg.width);
                 expect(goldenImg.height, 'image heights are the same').equal(runImg.height);
 
+                if (goldenImg.width !== runImg.width) {
+                    outputEntry.status = 'different_widths';
+                }
+                if (goldenImg.height !== runImg.height) {
+                    outputEntry.status = 'different_heights';
+                }
+
                 // Do the visual diff.
                 const diff = new PNG({width: goldenImg.width, height: runImg.height});
                 const numDiffPixels = pixelmatch(
