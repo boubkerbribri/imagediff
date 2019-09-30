@@ -56,7 +56,7 @@ module.exports = {
         {name: 'cart_rules', url: 'index.php?controller=AdminCartRules'},
         {name: 'add_cart_rule', url: 'index.php?controller=AdminCartRules&addcart_rule'},
         {name: 'catalog_price_rules', url: 'index.php?controller=AdminSpecificPriceRule'},
-        {name: 'add_cart_rule', url: 'index.php?controller=AdminSpecificPriceRule&addspecific_price_rule'},
+        {name: 'add_catalog_price_rule', url: 'index.php?controller=AdminSpecificPriceRule&addspecific_price_rule'},
         {name: 'stock', url: 'index.php/sell/stocks/'},
         {name: 'movements', url: 'index.php/sell/stocks/movements'},
         {name: 'customers', url: 'index.php/sell/customers/'},
