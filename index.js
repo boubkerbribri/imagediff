@@ -114,7 +114,7 @@ describe('Crawl whole site and make screenshots', async () => {
     });
 
     describe('Crawl FO pages', async function() {
-        //crawl every BO page
+        //crawl every FO page
         FOPages = urlsList.FO;
         FOPages.forEach(function(FOPage) {
             it(`FO_${FOPage.name}`, async function () {
@@ -125,7 +125,7 @@ describe('Crawl whole site and make screenshots', async () => {
                 if (typeof(FOPage.customMethod) !== 'undefined') {
                     await FOPage.customMethod({page, loginInfos});
                 }
-                await takeAndCompareScreenshot(page, this.test.title);
+                await takeAndCompareScreenshot(page, this.test.title, 'FO');
             });
         });
     });
