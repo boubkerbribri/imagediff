@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "imagediff": "mocha index.js",
-    "golden": "mocha index.js RUN=golden"
+    "golden": "set RUN=golden&& mocha index.js"
   },
   "repository": {
     "type": "git",
