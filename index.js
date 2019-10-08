@@ -54,7 +54,9 @@ const createFolders = async () => {
 };
 createFolders();
 
-describe('Crawl whole site and make screenshots', async () => {
+let currentAction = (CURRENTRUN === 'golden') ? 'Crawl URLS and make golden reference screenshots' : 'Crawl URLs and compare screenshots with golden reference';
+
+describe(currentAction, async () => {
     before(async function() {
         browser = await puppeteer.launch({
             headless: JSON.parse(HEADLESS),
@@ -90,20 +92,28 @@ describe('Crawl whole site and make screenshots', async () => {
         describe(section.name + ' - ' + section.description, async function() {
             //crawl every page
             pagesToCrawl = section.urls;
+            let count = 1;
             pagesToCrawl.forEach(function (pageToCrawl) {
-                pageToCrawl.urlPrefix = section.urlPrefix;
+                pageToCrawl.urlPrefix = section.urlPrefix.replace('URL_BO', URL_BO).replace('URL_FO', URL_FO);
                 pageToCrawl.sectionName = section.name;
-                it(`Crawling ${pageToCrawl.name}`, async function () {
+                pageToCrawl.sectionDescription = section.description;
+                it(`Crawling ${pageToCrawl.name} (${count}/${pagesToCrawl.length})`, async function () {
                     await Promise.all([
                         page.goto(`${pageToCrawl.urlPrefix}${pageToCrawl.url}`),
                         page.waitForNavigation({waitUntil: 'networkidle0'})
                     ]);
-                    await page.waitForSelector('#ajax_running[style="display: none;"]');
+                    await page.waitFor(500);
+                    await page.evaluate(async () => {
+                        const block = await document.querySelector('#ajax_running');
+                        if (block) block.remove();
+                    });
+                    //await page.waitForSelector('#ajax_running[style="display: none;"]');
                     if (typeof(pageToCrawl.customAction) !== 'undefined') {
                         await pageToCrawl.customAction({page, loginInfos});
                     }
                     await takeAndCompareScreenshot(pageToCrawl, page);
                 });
+                count += 1;
             });
         });
     });
@@ -143,14 +153,14 @@ async function compareScreenshots(currentPage) {
             goldenPath : goldImgPath,
             runPath : runImgPath
         };
-
-        if (typeof(output[currentPage.sectionName]) === 'undefined') {
-            output[currentPage.sectionName] = [];
-        }
-
         //check if entry for this section has been made
-
-
+        if (typeof(output[currentPage.sectionName]) === 'undefined') {
+            output[currentPage.sectionName] = {
+                section: currentPage.sectionName,
+                description: currentPage.sectionDescription,
+                results : []
+            };
+        }
         let goldenExists = false;
         let fileExists = false;
         //check if golden image exists
@@ -159,7 +169,7 @@ async function compareScreenshots(currentPage) {
                 goldenExists = true;
             }
         } catch(err) {}
-        //check if image exists (should be...)
+        //check if current run image exists (should be...)
         try {
             if (fs.existsSync(runImgPath)) {
                 fileExists = true;
@@ -171,12 +181,12 @@ async function compareScreenshots(currentPage) {
         expect(fileExists).to.be.true;
         if (!fileExists) {
             outputEntry.status = 'run file not found';
-            output[currentPage.sectionName].push(outputEntry);
+            output[currentPage.sectionName]['results'].push(outputEntry);
             return;
         }
         if (!goldenExists) {
             outputEntry.status = 'golden file not found';
-            output[currentPage.sectionName].push(outputEntry);
+            output[currentPage.sectionName]['results'].push(outputEntry);
             return;
         }
         const goldenImg = fs.createReadStream(goldImgPath).pipe(new PNG()).on('parsed', doneReading);
@@ -214,7 +224,7 @@ async function compareScreenshots(currentPage) {
                 } else {
                     outputEntry.status = 'success';
                 }
-                output[currentPage.sectionName].push(outputEntry);
+                output[currentPage.sectionName]['results'].push(outputEntry);
                 expect(numDiffPixels, `Expected pixel difference (${numDiffPixels}) to be at most ${THRESHOLD}`).to.be.at.most(THRESHOLD);
                 resolve();
             } catch (error) {

@@ -1,7 +1,7 @@
 module.exports = [
     {
         name:'BO',
-        urlPrefix: URL_BO,
+        urlPrefix: 'URL_BO', //replaced
         description: 'Parcours du Back Office',
         urls: [
             {name: 'BO_login', url: 'index.php?controller=AdminLogin', customAction: async function({page}) {
@@ -68,7 +68,7 @@ module.exports = [
             {name: 'BO_add_catalog_price_rule', url: 'index.php?controller=AdminSpecificPriceRule&addspecific_price_rule'},
             {name: 'BO_stock', url: 'index.php/sell/stocks/'},
             {name: 'BO_movements', url: 'index.php/sell/stocks/movements'},
-            {name: 'BO_customers', url: 'index.php/sell/customers/', customAction: async function () {
+            {name: 'BO_customers', url: 'index.php/sell/customers/', customAction: async function ({page}) {
                     page.evaluate(() => {
                         const block = document.querySelector('td.column-connect');
                         if (block) block.innerHTML = "";
@@ -87,7 +87,7 @@ module.exports = [
             {name: 'BO_module_manager', url: 'index.php/improve/modules/manage'},
             {name: 'BO_module_manager_alerts', url: 'index.php/improve/modules/alerts'},
             {name: 'BO_module_manager_updates', url: 'index.php/improve/modules/updates'},
-            {name: 'BO_module_catalog', url: 'index.php?controller=AdminPsMboModule', customAction: async function() {
+            {name: 'BO_module_catalog', url: 'index.php?controller=AdminPsMboModule', customAction: async function({page}) {
                     page.evaluate(() => {
                         const block = document.querySelector('#modules-list-container-all');
                         if (block) block.remove();
@@ -108,7 +108,7 @@ module.exports = [
                 }},
             {name: 'BO_homepage_configuration', url: 'index.php?controller=AdminPsThemeCustoConfiguration'},
             {name: 'BO_advanced_customization', url: 'index.php?controller=AdminPsThemeCustoAdvanced'},
-            {name: 'BO_theme_catalog', url: 'index.php?controller=AdminPsMboTheme', customAction: async function () {
+            {name: 'BO_theme_catalog', url: 'index.php?controller=AdminPsMboTheme', customAction: async function ({page}) {
                     page.evaluate(() => {
                         const block = document.querySelector('.addons-catalog-theme');
                         if (block) block.remove();
@@ -191,7 +191,7 @@ module.exports = [
     },
     {
         name:'FO',
-        urlPrefix: URL_FO,
+        urlPrefix: 'URL_FO',
         description: 'Parcours du Front Office',
         urls: [
             {name: 'FO_homepage', url:'index.php'},

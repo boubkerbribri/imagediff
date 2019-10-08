@@ -34,7 +34,7 @@ Everything is accessible in a folder named after the current date (ex : `imagedi
 ## URLs
 The `urls.js` file contains the list of URL to crawl and capture. You can edit it at your convenience.
 
-The structure is pretty clear, the `customMethod` lets you inject code before taking a screenshot (to remove
+The structure is pretty clear, the `customAction` lets you inject code before taking a screenshot (to remove
 some random elements for example).
 
 ## Threshold
