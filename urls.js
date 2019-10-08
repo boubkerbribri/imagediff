@@ -11,34 +11,41 @@ module.exports = [
                     });
                 }},
             {name: 'BO_dashboard', url: 'index.php?controller=AdminLogin', customAction: async function({page, loginInfos}) {
-                    await page.type('#email', loginInfos.admin.login);
-                    await page.type('#passwd', loginInfos.admin.password);
-                    await page.click('#submit_login');
-                    await page.waitForNavigation({waitUntil: 'networkidle0'});
+                await page.type('#email', loginInfos.admin.login);
+                await page.type('#passwd', loginInfos.admin.password);
+                await page.click('#submit_login');
+                await page.waitForNavigation({waitUntil: 'networkidle0'});
 
-                    page.evaluate(async () => {
-                        const block = document.querySelector("button.onboarding-button-shut-down");
-                        if (block) {
-                            await page.click('button.onboarding-button-shut-down');
-                            await page.waitForSelector('a.onboarding-button-stop', {visible: true});
-                            await page.click('a.onboarding-button-stop');
-                        }
-                    });
-                    page.evaluate(() => {
-                        const block = document.querySelector('#premium_advice_container');
-                        if (block) block.remove();
-                    });
-                    page.evaluate(() => {
-                        const block = document.querySelector("[id*='wrap_id_advice']");
-                        if (block) block.remove();
-                    });
+                page.evaluate(async () => {
+                    const block = document.querySelector("button.onboarding-button-shut-down");
+                    if (block) {
+                        await page.click('button.onboarding-button-shut-down');
+                        await page.waitForSelector('a.onboarding-button-stop', {visible: true});
+                        await page.click('a.onboarding-button-stop');
+                    }
+                });
+                page.evaluate(() => {
+                    const block = document.querySelector('#premium_advice_container');
+                    if (block) block.remove();
+                });
+                page.evaluate(() => {
+                    const block = document.querySelector("[id*='wrap_id_advice']");
+                    if (block) block.remove();
+                });
+                page.evaluate(() => {
+                  const block = document.querySelector("#active_shopping_cart");
+                  if (block) block.innerHTML = '0';
+                });
+                page.evaluate(() => {
+                  const block = document.querySelector("#abandoned_cart");
+                  if (block) block.innerHTML = '0';
+                });
                 }},
             {name: 'BO_orders', url: 'index.php?controller=AdminOrders'},
             {name: 'BO_add_orders', url: 'index.php?controller=AdminOrders&addorder'},
             {name: 'BO_invoices', url: 'index.php/sell/orders/invoices/'},
             {name: 'BO_credits_slips', url: 'index.php?controller=AdminSlip'},
             {name: 'BO_delivery_slips', url: 'index.php/sell/orders/delivery-slips/'},
-            /*{name: 'shopping_carts', url: 'index.php?controller=AdminCarts'},*/
             {name: 'BO_products', url: 'index.php/sell/catalog/products'},
             {name: 'BO_categories', url: 'index.php/sell/catalog/categories', customAction: function({page}) {
                     page.evaluate(() => {
@@ -184,7 +191,6 @@ module.exports = [
             {name: 'BO_permissions', url: 'index.php?controller=AdminAccess'},
             {name: 'BO_database', url: 'index.php/configure/advanced/sql-requests/'},
             {name: 'BO_add_query', url: 'index.php/configure/advanced/sql-requests/new'},
-            /*{name: 'BO_logs', url: 'index.php/configure/advanced/logs/'},*/
             {name: 'BO_webservice', url: 'index.php/configure/advanced/webservice-keys/'},
             {name: 'BO_add_webservice_key', url: 'index.php/configure/advanced/webservice-keys/new'},
         ]

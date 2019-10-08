@@ -31,9 +31,9 @@ const HEADLESS = process.env.HEADLESS || true;
 
 let output = {
     date : reportPathDate,
-    threshold : THRESHOLD,
-    BO : [],
-    FO : []
+    startDate : new Date().toISOString(),
+    endDate : null,
+    threshold : THRESHOLD
 };
 let page = null;
 
@@ -79,6 +79,7 @@ describe(currentAction, async () => {
         await browser.close();
         // Create report file
         if (CURRENTRUN !== 'golden') {
+            output.endDate = new Date().toISOString();
             fs.writeFile(`${fullReportPath}/report.json`, JSON.stringify(output), (err) => {
                 if (err) {
                     return console.error(err);
@@ -106,6 +107,8 @@ describe(currentAction, async () => {
                     await page.evaluate(async () => {
                         const block = await document.querySelector('#ajax_running');
                         if (block) block.remove();
+                        const showcaseCard = await document.querySelector('#categoriesShowcaseCard');
+                        if (showcaseCard) showcaseCard.remove();
                     });
                     //await page.waitForSelector('#ajax_running[style="display: none;"]');
                     if (typeof(pageToCrawl.customAction) !== 'undefined') {
@@ -155,12 +158,12 @@ async function compareScreenshots(currentPage) {
         };
         //check if entry for this section has been made
         if (typeof(output[currentPage.sectionName]) === 'undefined') {
-            output[currentPage.sectionName] = {
-                section: currentPage.sectionName,
-                description: currentPage.sectionDescription,
-                results : []
-            };
+            output[currentPage.sectionName] = {};
+            output[currentPage.sectionName].section = currentPage.sectionName;
+            output[currentPage.sectionName].description = currentPage.sectionDescription;
+            output[currentPage.sectionName].results = [];
         }
+
         let goldenExists = false;
         let fileExists = false;
         //check if golden image exists
@@ -181,12 +184,12 @@ async function compareScreenshots(currentPage) {
         expect(fileExists).to.be.true;
         if (!fileExists) {
             outputEntry.status = 'run file not found';
-            output[currentPage.sectionName]['results'].push(outputEntry);
+            output[currentPage.sectionName].results.push(outputEntry);
             return;
         }
         if (!goldenExists) {
             outputEntry.status = 'golden file not found';
-            output[currentPage.sectionName]['results'].push(outputEntry);
+            output[currentPage.sectionName].results.push(outputEntry);
             return;
         }
         const goldenImg = fs.createReadStream(goldImgPath).pipe(new PNG()).on('parsed', doneReading);
@@ -224,7 +227,7 @@ async function compareScreenshots(currentPage) {
                 } else {
                     outputEntry.status = 'success';
                 }
-                output[currentPage.sectionName]['results'].push(outputEntry);
+                output[currentPage.sectionName].results.push(outputEntry);
                 expect(numDiffPixels, `Expected pixel difference (${numDiffPixels}) to be at most ${THRESHOLD}`).to.be.at.most(THRESHOLD);
                 resolve();
             } catch (error) {
