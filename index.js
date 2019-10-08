@@ -86,37 +86,24 @@ describe('Crawl whole site and make screenshots', async () => {
         }
     });
 
-    describe('Crawl BO pages', async function() {
-        //crawl every BO page
-        BOPages = urlsList.BO;
-        BOPages.forEach(function(BOPage) {
-            it(`BO_${BOPage.name}`, async function () {
-                await Promise.all([
-                    page.goto(URL_BO+BOPage.url),
-                    page.waitForNavigation({waitUntil: 'networkidle0'})
-                ]);
-                await page.waitForSelector('#ajax_running[style="display: none;"]');
-                if (typeof(BOPage.customMethod) !== 'undefined') {
-                    await BOPage.customMethod({page, loginInfos});
-                }
-                await takeAndCompareScreenshot(BOPage.url, page, this.test.title);
-            });
-        });
-    });
-
-    describe('Crawl FO pages', async function() {
-        //crawl every FO page
-        FOPages = urlsList.FO;
-        FOPages.forEach(function(FOPage) {
-            it(`FO_${FOPage.name}`, async function () {
-                await Promise.all([
-                    page.goto(URL_FO+FOPage.url),
-                    page.waitForNavigation({waitUntil: 'networkidle0'})
-                ]);
-                if (typeof(FOPage.customMethod) !== 'undefined') {
-                    await FOPage.customMethod({page, loginInfos});
-                }
-                await takeAndCompareScreenshot(FOPage.url, page, this.test.title, 'FO');
+    urlsList.forEach(function(section) {
+        describe(section.name + ' - ' + section.description, async function() {
+            //crawl every page
+            pagesToCrawl = section.urls;
+            pagesToCrawl.forEach(function (pageToCrawl) {
+                pageToCrawl.urlPrefix = section.urlPrefix;
+                pageToCrawl.sectionName = section.name;
+                it(`Crawling ${pageToCrawl.name}`, async function () {
+                    await Promise.all([
+                        page.goto(`${pageToCrawl.urlPrefix}${pageToCrawl.url}`),
+                        page.waitForNavigation({waitUntil: 'networkidle0'})
+                    ]);
+                    await page.waitForSelector('#ajax_running[style="display: none;"]');
+                    if (typeof(pageToCrawl.customAction) !== 'undefined') {
+                        await pageToCrawl.customAction({page, loginInfos});
+                    }
+                    await takeAndCompareScreenshot(pageToCrawl, page);
+                });
             });
         });
     });
@@ -124,17 +111,16 @@ describe('Crawl whole site and make screenshots', async () => {
 
 /**
  * Take a screenshot of a page and ask for comparison if it's the second run
+ * @param currentPage
  * @param page
- * @param fileName
- * @param office
  * @returns {Promise<unknown>}
  */
-async function takeAndCompareScreenshot(url, page, fileName, office = 'BO') {
+async function takeAndCompareScreenshot(currentPage, page) {
     let path = (CURRENTRUN === 'golden' ? goldenReportPath : runReportPath);
-    await page.screenshot({path: `${path}/${fileName}.png`, fullPage: true });
+    await page.screenshot({path: `${path}/${currentPage.name}.png`, fullPage: true });
 
     if (CURRENTRUN !== 'golden') {
-        return await compareScreenshots(url, fileName, office);
+        return await compareScreenshots(currentPage);
     }
 }
 
@@ -144,19 +130,26 @@ async function takeAndCompareScreenshot(url, page, fileName, office = 'BO') {
  * @param office
  * @returns {Promise<unknown>}
  */
-async function compareScreenshots(url, fileName, office) {
+async function compareScreenshots(currentPage) {
     return new Promise((resolve, reject) => {
-        const goldImgPath = `${goldenReportPath}/${fileName}.png`;
-        const runImgPath = `${runReportPath}/${fileName}.png`;
-        const diffImgPath = `${resultReportPath}/${fileName}.png`;
+        const goldImgPath = `${goldenReportPath}/${currentPage.name}.png`;
+        const runImgPath = `${runReportPath}/${currentPage.name}.png`;
+        const diffImgPath = `${resultReportPath}/${currentPage.name}.png`;
 
         let outputEntry = {
-            name : fileName,
-            url : url,
+            name : currentPage.name,
+            url : currentPage.urlPrefix+currentPage.url,
             status : 'error',
             goldenPath : goldImgPath,
             runPath : runImgPath
         };
+
+        if (typeof(output[currentPage.sectionName]) === 'undefined') {
+            output[currentPage.sectionName] = [];
+        }
+
+        //check if entry for this section has been made
+
 
         let goldenExists = false;
         let fileExists = false;
@@ -178,12 +171,12 @@ async function compareScreenshots(url, fileName, office) {
         expect(fileExists).to.be.true;
         if (!fileExists) {
             outputEntry.status = 'run file not found';
-            output[office].push(outputEntry);
+            output[currentPage.sectionName].push(outputEntry);
             return;
         }
         if (!goldenExists) {
             outputEntry.status = 'golden file not found';
-            output[office].push(outputEntry);
+            output[currentPage.sectionName].push(outputEntry);
             return;
         }
         const goldenImg = fs.createReadStream(goldImgPath).pipe(new PNG()).on('parsed', doneReading);
@@ -221,7 +214,7 @@ async function compareScreenshots(url, fileName, office) {
                 } else {
                     outputEntry.status = 'success';
                 }
-                output[office].push(outputEntry);
+                output[currentPage.sectionName].push(outputEntry);
                 expect(numDiffPixels, `Expected pixel difference (${numDiffPixels}) to be at most ${THRESHOLD}`).to.be.at.most(THRESHOLD);
                 resolve();
             } catch (error) {
