@@ -19,7 +19,7 @@
   "homepage": "https://github.com/SimonGrn/imagediff#readme",
   "dependencies": {
     "chai": "^4.2.0",
-    "mocha": "^6.2.1",
+    "mocha": "^10.2.0",
     "pixelmatch": "^5.1.0",
     "puppeteer": "^1.20.0"
   }
